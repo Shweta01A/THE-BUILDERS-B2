@@ -1046,7 +1046,7 @@ function startIntroduction() {
 
         try {
 
-            if (introViewer) {
+            if (intro) {
 
                 introViewer.destroy();
 
@@ -1255,7 +1255,7 @@ function startIntroduction() {
 
 
         panorama.style.opacity =
-            "0.01";
+            "1";
 
 
         try {
@@ -1277,8 +1277,6 @@ function startIntroduction() {
 
 
         viewer = null;
-
-        panorama.innerHTML = "";
 
 
         if (
