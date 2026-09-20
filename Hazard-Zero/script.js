@@ -1,7 +1,41 @@
 /* =========================================================
    HAZARD ZERO
    COMPLETE GAME SCRIPT
-   =========================================================
+
+   ---------------------------------------------------------
+   CHANGES IN THIS VERSION (performance refactor)
+   ---------------------------------------------------------
+   1. BUG FIX: loadIntroPanorama() checked `if (intro)` instead
+      of `if (introViewer)`. That's an undefined variable, so
+      the destroy() call silently threw and was swallowed by
+      the catch block — meaning the old intro WebGL context
+      was never released. Over repeated restarts this leaks
+      WebGL contexts (browsers cap these, commonly ~16) and
+      causes things to slow down or glitch. Fixed below.
+
+   2. PERFORMANCE: loadScene() used to call viewer.destroy()
+      and construct a brand-new pannellum.viewer() for EVERY
+      scene change — tearing down and rebuilding the whole
+      WebGL canvas each time, with no preloading, so the next
+      panorama only started downloading the moment the player
+      clicked "next".
+
+      Replaced with Pannellum's built-in multi-scene config:
+      all panoramas are registered once (with preload: true)
+      on ONE persistent viewer, created in initGameViewer().
+      Moving between scenes now calls viewer.loadScene(id) on
+      the same instance — no destroy/recreate, and upcoming
+      scenes are fetched in the background while the current
+      one is being viewed.
+
+      New/changed functions: sceneId(), buildScenesConfig(),
+      initGameViewer(), onSceneReady(), loadScene(), and the
+      "Begin Training" click handler + moveToNextScene() (both
+      updated to match the new loadScene(index) signature).
+
+      Everything else — hazard hotspot logic, scoring, the
+      timer, admin dashboard, login/registration, notifications
+      — is unchanged.
 
    SCENES
    1 = Warehouse
@@ -1020,6 +1054,18 @@ function startIntroduction() {
 
     loadIntroPanorama();
 
+
+    // =========================================
+    // WARM THE CACHE FOR SCENE 1 WHILE THE
+    // PLAYER IS STILL READING THE INTRO TEXT
+    // (scene 0 is already being loaded above by
+    // the intro viewer itself, so it's covered)
+    // =========================================
+
+    prefetchImage(
+        warehouseImages[1]
+    );
+
 }
     /* =====================================================
        INTRO 360 VIEWER
@@ -1046,7 +1092,16 @@ function startIntroduction() {
 
         try {
 
-            if (intro) {
+            /* -------------------------------------------------
+               BUG FIX: this used to check `if (intro)` — an
+               undefined variable — so the destroy() call below
+               always threw and was swallowed by the catch,
+               meaning the previous intro viewer's WebGL context
+               was never released. Now correctly checks
+               `introViewer`.
+               ------------------------------------------------- */
+
+            if (introViewer) {
 
                 introViewer.destroy();
 
@@ -1204,9 +1259,15 @@ function startIntroduction() {
                 setupGameControls();
 
 
-                loadScene(
-                    warehouseImages[0]
-                );
+                /* ---------------------------------------------
+                   CHANGED: used to call
+                   loadScene(warehouseImages[0]), which built a
+                   brand-new single-scene viewer. Now builds the
+                   ONE multi-scene viewer that will be reused for
+                   the rest of this training run.
+                   --------------------------------------------- */
+
+                initGameViewer();
 
             }
         );
@@ -1215,10 +1276,91 @@ function startIntroduction() {
 
 
     /* =====================================================
-       LOAD SCENE
+       SCENE ID HELPER
+       Converts a scene index (0-9) into the id used inside
+       the Pannellum multi-scene config below, e.g. "scene0".
        ===================================================== */
 
-    function loadScene(imagePath) {
+    function sceneId(index) {
+
+        return "scene" + index;
+
+    }
+
+
+    /* =====================================================
+       BUILD MULTI-SCENE CONFIG
+       NOTE: scenes are NOT all marked preload:true here on
+       purpose. Doing that makes Pannellum kick off all 10
+       panorama downloads at once the moment the viewer is
+       created, which fights the FIRST scene (the one the
+       player is actually waiting on) for bandwidth and
+       browser connection slots. Instead, only the very next
+       scene is prefetched at a time — see prefetchImage()
+       and its call inside onSceneReady() below.
+       ===================================================== */
+
+    function buildScenesConfig() {
+
+        const scenes = {};
+
+        warehouseImages.forEach(function (path, index) {
+
+            scenes[sceneId(index)] = {
+
+                type: "equirectangular",
+
+                panorama: path
+
+            };
+
+        });
+
+        return scenes;
+
+    }
+
+
+    /* =====================================================
+       PREFETCH NEXT SCENE
+       Warms the browser's HTTP cache for one image at a time
+       by requesting it in the background. Called from
+       onSceneReady() for (currentScene + 1), so by the time a
+       player finishes reading/answering the current scene and
+       clicks "next", the next panorama is usually already
+       sitting in cache and Pannellum's loadScene() has almost
+       nothing left to fetch.
+       ===================================================== */
+
+    const prefetchedImages = {};
+
+    function prefetchImage(path) {
+
+        if (!path || prefetchedImages[path]) {
+
+            return;
+
+        }
+
+        prefetchedImages[path] = true;
+
+        const image = new Image();
+
+        image.src = path;
+
+    }
+
+
+    /* =====================================================
+       INITIALISE GAME VIEWER
+       Called once per training run (from the "Begin Training"
+       click). Builds ONE Pannellum instance covering every
+       scene, so moving between scenes never tears down and
+       rebuilds the whole WebGL canvas — it just swaps which
+       scene is active on the same canvas.
+       ===================================================== */
+
+    function initGameViewer() {
 
         const panorama =
             document.getElementById(
@@ -1237,26 +1379,12 @@ function startIntroduction() {
         }
 
 
-        console.log(
-            "Loading Scene:",
-            currentScene + 1,
-            imagePath
-        );
-
-
-        hazardDecisionMade = false;
-
-        currentHazard = null;
-
-
-        hideHazardPanel();
-
-        hideResultPanel();
-
-
         panorama.style.opacity =
             "1";
 
+
+        // Defensive cleanup in case a previous run's viewer
+        // wasn't destroyed cleanly.
 
         try {
 
@@ -1288,9 +1416,6 @@ function startIntroduction() {
                 "Pannellum library is not loaded."
             );
 
-            panorama.style.opacity =
-                "1";
-
             return;
 
         }
@@ -1303,125 +1428,89 @@ function startIntroduction() {
                     "panorama",
                     {
 
-                        type:
-                            "equirectangular",
+                        default: {
 
-                        panorama:
-                            imagePath,
+                            firstScene:
+                                sceneId(0),
 
-                        autoLoad:
-                            true,
+                            sceneFadeDuration:
+                                200,
 
-                        showControls:
-                            true,
+                            autoLoad:
+                                true,
 
-                        showFullscreenCtrl:
-                            false,
+                            showControls:
+                                true,
 
-                        showZoomCtrl:
-                            true,
+                            showFullscreenCtrl:
+                                false,
 
-                        compass:
-                            false,
+                            showZoomCtrl:
+                                true,
 
-                        hfov:
-                            100,
+                            compass:
+                                false,
 
-                        pitch:
-                            0,
+                            hfov:
+                                100,
 
-                        yaw:
-                            0,
+                            pitch:
+                                0,
 
-                        minHfov:
-                            50,
+                            yaw:
+                                0,
 
-                        maxHfov:
-                            120,
+                            minHfov:
+                                50,
 
-                        draggable:
-                            true,
+                            maxHfov:
+                                120,
 
-                        mouseZoom:
-                            true,
+                            draggable:
+                                true,
 
-                        doubleClickZoom:
-                            false,
+                            mouseZoom:
+                                true,
 
-                        keyboardZoom:
-                            true,
+                            doubleClickZoom:
+                                false,
 
-                        friction:
-                            0.15
+                            keyboardZoom:
+                                true,
+
+                            friction:
+                                0.15
+
+                        },
+
+                        scenes:
+                            buildScenesConfig()
 
                     }
                 );
 
 
+            // Fires once, when the very first scene finishes loading.
+
             viewer.on(
                 "load",
                 function () {
 
-                    console.log(
-                        "Scene loaded:",
-                        currentScene + 1
+                    onSceneReady(
+                        sceneId(currentScene)
                     );
 
-
-                    panorama.style.opacity =
-                        "1";
-
-
-                    setTimeout(function () {
-
-                        resizeViewer();
-
-                    }, 100);
+                }
+            );
 
 
-                    updateHUD();
+            // Fires every time a later scene is switched to.
 
+            viewer.on(
+                "scenechange",
+                function (id) {
 
-                    if (currentScene === 2) {
-
-                        addOilHazard();
-
-                    }
-
-
-                    if (currentScene === 3) {
-
-                        addBoxHazard();
-
-                    }
-
-
-                    if (currentScene === 4) {
-
-                        addElectricalHazard();
-
-                    }
-
-
-                    if (currentScene === 5) {
-
-                        addCableHazard();
-
-                    }
-                    if (currentScene === 6) {
-
-                       addChemicalHazard();
-                    }
-                    if (currentScene === 7) {
-
-                        addFireHazard();
-                    }
-                    if (currentScene === 8) {
-                       addEmergencyHazard();
-                    }
-                    if (currentScene === 9) {
-                       addShelfHazard();
-                    }
+                    onSceneReady(id);
 
                 }
             );
@@ -1453,6 +1542,175 @@ function startIntroduction() {
                 "1";
 
         }
+    }
+
+
+    /* =====================================================
+       SCENE READY
+       Shared handler for both the first scene ("load" event)
+       and every scene switch after it ("scenechange" event).
+       Anything that used to live inside the old loadScene()'s
+       "load" callback — hiding panels, resizing, updating the
+       HUD, adding the right hazard for the current scene —
+       lives here now.
+       ===================================================== */
+
+    function onSceneReady(id) {
+
+        console.log(
+            "Scene ready:",
+            id,
+            "index:",
+            currentScene
+        );
+
+
+        hazardDecisionMade = false;
+
+        currentHazard = null;
+
+
+        hideHazardPanel();
+
+        hideResultPanel();
+
+
+        const panorama =
+            document.getElementById(
+                "panorama"
+            );
+
+
+        if (panorama) {
+
+            panorama.style.opacity =
+                "1";
+
+        }
+
+
+        setTimeout(function () {
+
+            resizeViewer();
+
+        }, 100);
+
+
+        updateHUD();
+
+
+        if (currentScene === 2) {
+
+            addOilHazard();
+
+        }
+
+        if (currentScene === 3) {
+
+            addBoxHazard();
+
+        }
+
+        if (currentScene === 4) {
+
+            addElectricalHazard();
+
+        }
+
+        if (currentScene === 5) {
+
+            addCableHazard();
+
+        }
+
+        if (currentScene === 6) {
+
+            addChemicalHazard();
+
+        }
+
+        if (currentScene === 7) {
+
+            addFireHazard();
+
+        }
+
+        if (currentScene === 8) {
+
+            addEmergencyHazard();
+
+        }
+
+        if (currentScene === 9) {
+
+            addShelfHazard();
+
+        }
+
+
+        // Start fetching the NEXT scene's image now, while the
+        // player is still looking at/answering this one.
+
+        prefetchImage(
+            warehouseImages[currentScene + 1]
+        );
+
+    }
+
+
+    /* =====================================================
+       LOAD SCENE
+       Switches the ALREADY-RUNNING viewer to a new scene by
+       index. No destroy, no recreate — just a scene swap on
+       the same WebGL canvas, using a panorama that was already
+       preloading in the background while the player was on the
+       previous scene.
+       ===================================================== */
+
+    function loadScene(sceneIndex) {
+
+        if (!viewer) {
+
+            console.error(
+                "Game viewer is not initialised yet — call initGameViewer() first."
+            );
+
+            return;
+
+        }
+
+
+        console.log(
+            "Switching to scene:",
+            sceneIndex + 1
+        );
+
+
+        hazardDecisionMade = false;
+
+        currentHazard = null;
+
+
+        hideHazardPanel();
+
+        hideResultPanel();
+
+
+        try {
+
+            viewer.loadScene(
+                sceneId(sceneIndex)
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Scene switch error:",
+                error
+            );
+
+        }
+
     }
     /* =====================================================
    5 MINUTE TRAINING TIMER
@@ -1839,8 +2097,15 @@ function showTimerNotification(
 
             currentScene++;
 
+            /* -------------------------------------------------
+               CHANGED: used to be
+               loadScene(warehouseImages[currentScene]) — an
+               image path. loadScene() now takes the scene
+               INDEX and switches the existing viewer to it.
+               ------------------------------------------------- */
+
             loadScene(
-                warehouseImages[currentScene]
+                currentScene
             );
 
             return;
