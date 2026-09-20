@@ -1,0 +1,762 @@
+/* ==========================================================================
+   THE BUILDERS — SHARED STYLESHEET
+   Used by every page (index, about, hazard-zero, demo, contact).
+   Sections below are numbered so they're easy to find and edit:
+     1. Fonts & CSS reset
+     2. Design tokens (colours, type scale, spacing)
+     3. Base element styles
+     4. Layout helpers (containers, sections, grid)
+     5. Header / navigation
+     6. Buttons
+     7. Hero sections
+     8. Cards (who-we-are, features, benefits)
+     9. Numbered step sections (How It Works / Demo flow)
+     10. Hazard scenario tiles
+     11. Image + text split sections
+     12. CTA band
+     13. Contact form
+     14. Footer
+     15. Responsive breakpoints
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. FONTS & RESET
+   Space Grotesk carries headings (a technical, blueprint-like feel that
+   suits a workplace-safety product); Inter carries body copy for readability.
+   -------------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* Respect users who've asked for less motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. DESIGN TOKENS
+   Brand colours are fixed by the brief. Everything else (spacing, radii,
+   shadows) is defined once here so the whole site stays consistent.
+   -------------------------------------------------------------------------- */
+:root {
+  /* brand colours */
+  --dark:        #07090c;
+  --dark-2:      #0f1216;   /* slightly lifted panel on dark sections */
+  --orange:      #ff7a00;
+  --orange-dim:  #cc6200;
+  --green:       #32d583;
+  --red:         #ff4d45;
+  --white:       #ffffff;
+  --light:       #f5f5f4;  /* warm off-white, not pure white, for section variety */
+  --line:        #23262c;  /* hairline borders on dark background */
+  --line-light:  #e2e1de;  /* hairline borders on light background */
+  --grey:        #6b7280;
+  --grey-dark:   #3a3f47;
+
+  /* type */
+  --font-head: 'Space Grotesk', 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
+
+  /* spacing scale */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+  --space-6: 6rem;
+
+  /* shape */
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --container: 1160px;
+}
+
+/* --------------------------------------------------------------------------
+   3. BASE ELEMENT STYLES
+   -------------------------------------------------------------------------- */
+body {
+  font-family: var(--font-body);
+  color: var(--dark);
+  background: var(--white);
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-head);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--dark);
+}
+
+h1 { font-size: clamp(2.4rem, 4.5vw, 3.6rem); }
+h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); }
+h3 { font-size: 1.25rem; }
+
+p { color: var(--grey-dark); }
+
+.section-kicker {
+  font-family: var(--font-head);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--orange);
+  margin-bottom: var(--space-1);
+}
+
+.section-lede {
+  max-width: 620px;
+  color: var(--grey);
+  font-size: 1.05rem;
+  margin-top: var(--space-2);
+}
+
+/* --------------------------------------------------------------------------
+   4. LAYOUT HELPERS
+   -------------------------------------------------------------------------- */
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.section {
+  padding: var(--space-6) 0;
+}
+
+.section--tight {
+  padding: var(--space-5) 0;
+}
+
+.section--dark {
+  background: var(--dark);
+  color: var(--white);
+}
+
+.section--dark h2, .section--dark h3 {
+  color: var(--white);
+}
+
+.section--dark p {
+  color: #a7abb3;
+}
+
+.section--light {
+  background: var(--light);
+}
+
+.section-head {
+  margin-bottom: var(--space-4);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  align-items: center;
+}
+/* --------------------------------------------------------------------------
+   5. HEADER / NAVIGATION
+   -------------------------------------------------------------------------- */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: #07090c;
+    border-bottom: 1px solid #22262d;
+}
+
+.site-header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 88px;
+}
+
+.site-header .logo img {
+    height: 84px;
+    width: auto;
+    display: block;
+}
+
+.nav-list {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.nav-list a {
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: var(--space-1) 0;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-list a:hover,
+.nav-list a[aria-current="page"] {
+    color: #ffffff;
+    border-color: #ff7a00;
+}
+
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    padding: var(--space-1);
+}
+
+.nav-toggle span {
+    width: 22px;
+    height: 2px;
+    background: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   6. BUTTONS
+   Two variants: solid (primary action) and outline (secondary action).
+   Both get a small, deliberate lift on hover — the only hover motion
+   used across the site, so it stays meaningful rather than decorative.
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--radius-s);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.btn--primary {
+  background: var(--orange);
+  color: var(--dark);
+}
+
+.btn--primary:hover {
+  background: #ff8a1f;
+  transform: translateY(-2px);
+}
+
+.btn--outline {
+  border: 1px solid var(--line);
+  color: var(--white);
+}
+
+.btn--outline:hover {
+  border-color: var(--orange);
+  transform: translateY(-2px);
+}
+
+.btn--outline-dark {
+  border: 1px solid var(--line-light);
+  color: var(--dark);
+}
+
+.btn--outline-dark:hover {
+  border-color: var(--orange);
+  transform: translateY(-2px);
+}
+
+.btn-row {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   7. HERO SECTIONS
+   Every page opens with a dark hero. Home's hero is the tallest since it
+   carries the whole company pitch; inner-page heroes are shorter banners.
+   -------------------------------------------------------------------------- */
+.hero {
+  background: var(--dark);
+  color: var(--white);
+  padding: var(--space-6) 0 var(--space-5);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.hero-logo {
+  height: 40px;
+  margin-bottom: var(--space-3);
+}
+
+.hero h1 {
+  color: var(--white);
+}
+
+.hero .tagline {
+  font-family: var(--font-head);
+  color: var(--orange);
+  font-size: 1.1rem;
+  margin-top: var(--space-2);
+}
+
+.hero p.lede {
+  color: #b7bac1;
+  margin-top: var(--space-2);
+  max-width: 46ch;
+}
+
+.hero .btn-row {
+  margin-top: var(--space-4);
+}
+
+.hero-media img {
+  border-radius: var(--radius-m);
+  border: 1px solid var(--line);
+}
+
+/* short banner hero used on inner pages */
+.page-hero {
+  background: var(--dark);
+  color: var(--white);
+  padding: var(--space-5) 0;
+  text-align: left;
+}
+
+.page-hero h1 { color: var(--white); }
+
+.page-hero .tagline {
+  font-family: var(--font-head);
+  color: var(--orange);
+  margin-top: var(--space-1);
+  font-size: 1.05rem;
+}
+
+/* --------------------------------------------------------------------------
+   8. CARDS
+   Used for "Who We Are", "Key Features", "Benefits". Deliberately flat —
+   a hairline border rather than a drop shadow, so the site doesn't fall
+   into the generic soft-shadow SaaS-card look.
+   -------------------------------------------------------------------------- */
+.card {
+  border: 1px solid var(--line-light);
+  border-radius: var(--radius-m);
+  padding: var(--space-3);
+  background: var(--white);
+}
+
+.card .card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-s);
+  background: rgba(255, 122, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-2);
+  color: var(--orange);
+  font-family: var(--font-head);
+  font-weight: 700;
+}
+
+.card h3 {
+  margin-bottom: var(--space-1);
+}
+
+.card p {
+  font-size: 0.95rem;
+}
+
+/* card variant for dark sections (e.g. Key Features on Hazard Zero page) */
+.card--dark {
+  background: var(--dark-2);
+  border-color: var(--line);
+}
+
+.card--dark p { color: #a7abb3; }
+
+/* --------------------------------------------------------------------------
+   9. NUMBERED STEP SECTIONS
+   Genuinely sequential content only: How It Works (Hazard Zero page) and
+   the Demo flow. Numbers here mean something — they are steps, not decor.
+   -------------------------------------------------------------------------- */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  counter-reset: step;
+}
+
+.step {
+  border-top: 2px solid var(--orange);
+  padding-top: var(--space-2);
+}
+
+.step .step-number {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--orange);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.step h3 { margin-bottom: var(--space-1); }
+.step p { font-size: 0.92rem; }
+
+/* --------------------------------------------------------------------------
+   10. HAZARD SCENARIO TILES
+   Training Scenarios grid on the Hazard Zero page.
+   -------------------------------------------------------------------------- */
+.hazard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.hazard-tile {
+  position: relative;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.hazard-tile img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.hazard-tile .hazard-label {
+  position: absolute;
+  left: var(--space-2);
+  bottom: var(--space-2);
+  background: rgba(7, 9, 12, 0.85);
+  color: var(--white);
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-s);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-left: 3px solid var(--red);
+}
+
+/* --------------------------------------------------------------------------
+   11. IMAGE + TEXT SPLIT SECTIONS
+   Reused for the product intro blocks (Hazard Zero on Home, About page).
+   -------------------------------------------------------------------------- */
+.split img {
+  border-radius: var(--radius-m);
+}
+
+.split .eyebrow {
+  color: var(--orange);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: var(--space-1);
+}
+
+.split ul.checklist li {
+  position: relative;
+  padding-left: 1.6rem;
+  margin-top: var(--space-1);
+  color: var(--grey-dark);
+}
+
+.split ul.checklist li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 9px;
+  height: 9px;
+  background: var(--green);
+  border-radius: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   12. CTA BAND
+   The closing call-to-action strip used near the bottom of every page.
+   -------------------------------------------------------------------------- */
+.cta-band {
+  background: var(--orange);
+  color: var(--dark);
+  padding: var(--space-5) 0;
+  text-align: center;
+}
+
+.cta-band h2 { color: var(--dark); }
+
+.cta-band p {
+  color: rgba(7, 9, 12, 0.75);
+  margin-top: var(--space-1);
+}
+
+.cta-band .btn-row {
+  justify-content: center;
+  margin-top: var(--space-3);
+}
+
+.cta-band .btn--primary {
+  background: var(--dark);
+  color: var(--white);
+}
+
+.cta-band .btn--primary:hover {
+  background: #1a1d22;
+}
+
+/* --------------------------------------------------------------------------
+   13. CONTACT FORM
+   -------------------------------------------------------------------------- */
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: var(--space-5);
+}
+
+.contact-info h3 { margin-bottom: var(--space-1); }
+
+.contact-info .info-row {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line-light);
+}
+
+.contact-info .info-row .label {
+  font-size: 0.85rem;
+  color: var(--grey);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-field {
+  margin-bottom: var(--space-3);
+}
+
+.form-field label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--line-light);
+  border-radius: var(--radius-s);
+  font: inherit;
+  background: var(--white);
+}
+
+.form-field input:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+.form-note {
+  font-size: 0.85rem;
+  color: var(--grey);
+  margin-top: var(--space-1);
+}
+
+#form-confirmation {
+  display: none;
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-s);
+  border: 1px solid var(--green);
+  background: rgba(50, 213, 131, 0.08);
+  color: #1a7a4d;
+  font-weight: 500;
+}
+
+#form-confirmation.visible {
+  display: block;
+}
+
+.field-error {
+  color: var(--red);
+  font-size: 0.82rem;
+  margin-top: 0.3rem;
+  display: none;
+}
+
+.field-error.visible {
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   14. FOOTER
+   -------------------------------------------------------------------------- */
+.site-footer {
+  background: var(--dark);
+  color: #a7abb3;
+  padding: var(--space-5) 0 var(--space-3);
+}
+
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.footer-top .logo img {
+  height: 30px;
+  margin-bottom: var(--space-1);
+}
+
+.footer-top .tagline {
+  font-size: 0.9rem;
+  max-width: 32ch;
+}
+
+.footer-nav {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.footer-nav a {
+  font-size: 0.9rem;
+  color: #cfd2d8;
+}
+
+.footer-nav a:hover { color: var(--orange); }
+
+.footer-bottom {
+  padding-top: var(--space-3);
+  font-size: 0.85rem;
+  color: var(--grey);
+}
+
+/* --------------------------------------------------------------------------
+   15. RESPONSIVE BREAKPOINTS
+   Two steps down from desktop: tablet (<=960px) and mobile (<=600px).
+   -------------------------------------------------------------------------- */
+@media (max-width: 960px) {
+  .hero-grid,
+  .grid-2,
+  .contact-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-grid { gap: var(--space-4); }
+
+  .grid-3,
+  .steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-4,
+  .hazard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .footer-top {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+}
+
+@media (max-width: 720px) {
+  .nav-list {
+    position: absolute;
+    top: 76px;
+    left: 0;
+    right: 0;
+    background: var(--dark);
+    flex-direction: column;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease;
+  }
+
+  .nav-list.open {
+    max-height: 320px;
+  }
+
+  .nav-list a {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--line);
+    width: 100%;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+}
+
+@media (max-width: 600px) {
+  .section { padding: var(--space-5) 0; }
+
+  .grid-3,
+  .grid-4,
+  .steps,
+  .hazard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-nav {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+}

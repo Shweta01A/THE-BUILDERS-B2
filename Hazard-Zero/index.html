@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Hazard Zero | Warehouse Safety Training</title>
+
+    <!-- Pannellum 360 Viewer -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"
+    >
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div id="game">
+
+
+    <!-- =====================================================
+         EMPLOYEE LOGIN
+         ===================================================== -->
+
+    <section
+        id="login-screen"
+        class="screen auth-screen"
+    >
+
+        <div class="auth-card">
+
+            <div class="logo">
+                HAZARD <span>ZERO</span>
+            </div>
+
+            <div class="auth-badge">
+                EMPLOYEE PORTAL
+            </div>
+
+            <h1>Employee Login</h1>
+
+            <p class="auth-subtitle">
+                Sign in to begin your warehouse safety training.
+            </p>
+
+
+            <label for="login-employee-id">
+                EMPLOYEE ID
+            </label>
+
+            <input
+                id="login-employee-id"
+                class="auth-input"
+                type="text"
+                placeholder="Enter employee ID"
+                autocomplete="off"
+            >
+
+
+            <label for="login-password">
+                PASSWORD
+            </label>
+
+            <input
+                id="login-password"
+                class="auth-input"
+                type="password"
+                placeholder="Enter password"
+                autocomplete="off"
+            >
+
+
+            <p
+                id="login-error"
+                class="error-message"
+            ></p>
+
+
+            <button
+                id="employee-login-button"
+                class="primary-button"
+                type="button"
+            >
+                EMPLOYEE LOGIN
+            </button>
+
+
+            <button
+                id="show-register-button"
+                class="secondary-button"
+                type="button"
+            >
+                CREATE ACCOUNT
+            </button>
+
+
+            <button
+                id="show-admin-button"
+                class="text-button"
+                type="button"
+            >
+                ADMIN LOGIN
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CREATE EMPLOYEE ACCOUNT
+         ===================================================== -->
+
+    <section
+        id="register-screen"
+        class="screen auth-screen hidden"
+    >
+
+        <div class="auth-card">
+
+            <div class="logo">
+                HAZARD <span>ZERO</span>
+            </div>
+
+            <div class="auth-badge">
+                NEW EMPLOYEE
+            </div>
+
+            <h1>Create Account</h1>
+
+            <p class="auth-subtitle">
+                Create your employee account before starting training.
+            </p>
+
+
+            <label for="register-employee-id">
+                EMPLOYEE ID
+            </label>
+
+            <input
+                id="register-employee-id"
+                class="auth-input"
+                type="text"
+                placeholder="Create employee ID"
+                autocomplete="off"
+            >
+
+
+            <label for="register-name">
+                FULL NAME
+            </label>
+
+            <input
+                id="register-name"
+                class="auth-input"
+                type="text"
+                placeholder="Enter your name"
+                autocomplete="off"
+            >
+
+
+            <label for="register-password">
+                PASSWORD
+            </label>
+
+            <input
+                id="register-password"
+                class="auth-input"
+                type="password"
+                placeholder="Create password"
+                autocomplete="new-password"
+            >
+
+
+            <label>
+                GENDER
+            </label>
+
+            <div class="gender-selection">
+
+                <label class="gender-option">
+
+                    <input
+                        type="radio"
+                        name="gender"
+                        value="male"
+                    >
+
+                    <span class="gender-symbol">
+                        ♂
+                    </span>
+
+                    <span>
+                        Male
+                    </span>
+
+                </label>
+
+
+                <label class="gender-option">
+
+                    <input
+                        type="radio"
+                        name="gender"
+                        value="female"
+                    >
+
+                    <span class="gender-symbol">
+                        ♀
+                    </span>
+
+                    <span>
+                        Female
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <p
+                id="register-error"
+                class="error-message"
+            ></p>
+
+
+            <button
+                id="create-account-button"
+                class="primary-button"
+                type="button"
+            >
+                CREATE ACCOUNT
+            </button>
+
+
+            <button
+                id="back-to-login-button"
+                class="secondary-button"
+                type="button"
+            >
+                ← BACK TO LOGIN
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         ADMIN LOGIN
+         ===================================================== -->
+
+    <section
+        id="admin-screen"
+        class="screen auth-screen hidden"
+    >
+
+        <div class="auth-card">
+
+            <div class="logo">
+                HAZARD <span>ZERO</span>
+            </div>
+
+            <div class="auth-badge">
+                ADMINISTRATION
+            </div>
+
+            <h1>Admin Login</h1>
+
+            <p class="auth-subtitle">
+                Access employee training records and statistics.
+            </p>
+
+
+            <label for="admin-id">
+                ADMIN ID
+            </label>
+
+            <input
+                id="admin-id"
+                class="auth-input"
+                type="text"
+                placeholder="Admin ID"
+                autocomplete="off"
+            >
+
+
+            <label for="admin-password">
+                PASSWORD
+            </label>
+
+            <input
+                id="admin-password"
+                class="auth-input"
+                type="password"
+                placeholder="Admin password"
+            >
+
+
+            <p
+                id="admin-error"
+                class="error-message"
+            ></p>
+
+
+            <button
+                id="admin-login-button"
+                class="primary-button"
+                type="button"
+            >
+                ADMIN LOGIN
+            </button>
+
+
+            <button
+                id="admin-back-button"
+                class="secondary-button"
+                type="button"
+            >
+                ← BACK
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         ADMIN DASHBOARD
+         ===================================================== -->
+
+    <section
+        id="admin-dashboard"
+        class="screen dashboard-screen hidden"
+    >
+
+        <header class="dashboard-header">
+
+            <div class="logo">
+                HAZARD <span>ZERO</span>
+            </div>
+
+            <div class="dashboard-title">
+                ADMIN DASHBOARD
+            </div>
+
+            <button
+                id="admin-logout-button"
+                class="small-button"
+                type="button"
+            >
+                LOGOUT
+            </button>
+
+        </header>
+
+
+        <main class="dashboard-content">
+
+            <h1>
+                Training Overview
+            </h1>
+
+            <p class="dashboard-description">
+                Monitor employee safety training performance.
+            </p>
+
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <small>
+                        EMPLOYEES
+                    </small>
+
+                    <strong id="admin-total-employees">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <small>
+                        COMPLETED
+                    </small>
+
+                    <strong id="admin-completed">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <small>
+                        AVERAGE SCORE
+                    </small>
+
+                    <strong id="admin-average-score">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <small>
+                        AVERAGE RISK
+                    </small>
+
+                    <strong id="admin-average-risk">
+                        0%
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Employee ID</th>
+                             <th>Name</th>
+                             <th>Gender</th>
+                             <th>Score</th>
+                             <th>Best Score</th>
+                            <th>Attempts</th>
+                            <th>Completion Time</th>
+                            <th>Last Attempt</th>
+                             <th>Risk</th>
+                             <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody
+                        id="employee-table-body"
+                    ></tbody>
+
+                </table>
+
+            </div>
+
+        </main>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         INTRODUCTION / SAFETY BRIEFING
+         ===================================================== -->
+
+    <section
+        id="intro-screen"
+        class="screen intro-screen hidden"
+    >
+
+        <!-- Background 360 warehouse -->
+        <div id="intro-panorama"></div>
+
+
+        <!-- Dark cinematic overlay -->
+        <div class="intro-dark"></div>
+
+
+        <!-- Worker image
+             JavaScript automatically changes this to:
+
+             male   = assests/worker-male.png
+             female = assests/worker-female.png
+        -->
+
+        <img
+            id="worker-image"
+            class="worker-image"
+            src="assests/worker-male.png"
+            alt="Warehouse worker"
+        >
+
+
+        <!-- Dialogue -->
+
+        <div class="intro-dialogue">
+
+            <div class="intro-label">
+                SAFETY BRIEFING
+            </div>
+
+
+            <h2 id="intro-title">
+                Hello!
+            </h2>
+
+
+            <p id="intro-text">
+                Welcome to Hazard Zero.
+            </p>
+
+
+            <button
+                id="begin-training-button"
+                class="primary-button"
+                type="button"
+            >
+                BEGIN TRAINING →
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         MAIN GAME
+         ===================================================== -->
+
+    <section
+        id="game-screen"
+        class="warehouse-screen hidden"
+    >
+
+        <!-- =================================================
+             360 PANORAMA
+             ================================================= -->
+
+        <div id="panorama"></div>
+
+
+        <!-- Dark overlay -->
+        <div class="warehouse-overlay"></div>
+
+
+
+        <!-- =================================================
+             GAME HUD
+             ================================================= -->
+
+        <div class="game-hud">
+
+            <div class="hud-logo">
+                HAZARD <span>ZERO</span>
+            </div>
+
+
+            <div class="hud-box">
+
+                <small>
+                    SCORE
+                </small>
+
+                <strong id="score-display">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="hud-box">
+
+                <small>
+                    RISK
+                </small>
+
+                <strong id="risk-display">
+                    0%
+                </strong>
+
+            </div>
+            <div class="hud-box">
+
+    <small>
+        TIME
+    </small>
+
+    <strong id="timer-display">
+        05:00
+    </strong>
+
+</div>
+            <div class="hud-box">
+
+                <small>
+                    LOCATION
+                </small>
+
+                <strong id="scene-display">
+                    SCENE 1
+                </strong>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             EXIT
+             ================================================= -->
+
+        <button
+            id="exit-button"
+            class="exit-button"
+            type="button"
+        >
+            EXIT
+        </button>
+
+
+
+        <!-- =================================================
+             INSTRUCTION
+             ================================================= -->
+
+        <div
+            id="instruction"
+            class="instruction"
+        >
+            Double-click anywhere to move forward.
+        </div>
+
+
+
+        <!-- =================================================
+             NEXT SCENE
+             ================================================= -->
+
+        <button
+            id="next-scene-button"
+            class="next-scene-button hidden"
+            type="button"
+        >
+            CONTINUE →
+        </button>
+
+
+
+        <!-- =================================================
+             OIL HAZARD PANEL
+             ================================================= -->
+
+        <div
+            id="hazard-panel"
+            class="hazard-overlay hidden"
+        >
+
+            <div class="hazard-card">
+
+                <!-- Large warning triangle -->
+
+                <div class="triangle-large">
+                    !
+                </div>
+
+
+                <div class="hazard-label">
+                    HAZARD DETECTED
+                </div>
+             <h2 class="hazard-title"> OIL SPILL </h2>
+             <p class="hazard-description">
+               Oil has been spilled on the warehouse floor.
+               What should you do?
+              </p>
+             <div class="hazard-warning">
+              ⚠ Oil can cause slips, falls and serious
+               workplace injuries.
+            </div>
+
+            <div class="hazard-buttons">
+
+                    <!-- IMPORTANT:
+                         No points displayed BEFORE choice.
+                    -->
+
+                    <button
+                        id="safe-choice"
+                        class="safe-button"
+                        type="button"
+                    >
+                        REPORT &amp; SECURE AREA
+                    </button>
+
+
+                    <button
+                        id="unsafe-choice"
+                        class="unsafe-button"
+                        type="button"
+                    >
+                        IGNORE THE OIL
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             RESULT PANEL
+             ================================================= -->
+
+        <div
+            id="result-panel"
+            class="hazard-overlay hidden"
+        >
+
+            <div class="hazard-card result-card">
+
+                <div
+                    id="result-icon"
+                    class="triangle-large"
+                >
+                    ✓
+                </div>
+
+
+                <div
+                    id="result-label"
+                    class="hazard-label"
+                >
+                    RESULT
+                </div>
+
+
+                <h2 id="result-title">
+                    GOOD DECISION
+                </h2>
+
+
+                <p id="result-description">
+                    You made the correct decision.
+                </p>
+
+
+                <!--
+                    JavaScript puts +50 POINTS
+                    or -30 POINTS here AFTER clicking.
+                -->
+
+                <div
+                    id="result-points"
+                    class="result-points"
+                ></div>
+
+
+                <button
+                    id="result-continue"
+                    class="primary-button"
+                    type="button"
+                >
+                    CONTINUE →
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+<!-- =====================================================
+     FINISH SCREEN
+     ===================================================== -->
+
+<section
+    id="finish-screen"
+    class="screen finish-screen hidden"
+>
+
+    <div class="finish-card">
+
+        <div class="logo">
+            HAZARD <span>ZERO</span>
+        </div>
+
+        <div class="finish-icon">
+            🏆
+        </div>
+
+        <h1 id="completion-title">
+            🎉 CONGRATULATIONS!
+        </h1>
+
+        <p id="completion-message">
+            Your training is finished!
+        </p>
+
+        <p>
+            You have successfully completed the
+            <strong>Hazard Awareness Training.</strong>
+        </p>
+
+        <div class="final-stats">
+
+            <div>
+                <small>FINAL SCORE</small>
+
+                <strong id="final-score">
+                    0 / 400
+                </strong>
+            </div>
+
+
+            <div>
+                <small>RISK FACTOR</small>
+
+                <strong id="final-risk">
+                    0%
+                </strong>
+            </div>
+
+        </div>
+
+
+        <p
+            id="completion-result"
+            class="completion-result"
+        ></p>
+
+
+        <button
+            id="restart-button"
+            class="primary-button"
+            type="button"
+        >
+            RESTART TRAINING
+        </button>
+        <button id="back-to-home-button" class="finish-btn">BACK TO HOME</button>
+
+    </div>
+
+</section>
+
+<!-- =========================================================
+     PANNELLUM
+     ========================================================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"
+></script>
+
+
+<!-- =========================================================
+     HAZARD ZERO SCRIPT
+     ========================================================= -->
+
+<script src="script.js"></script>
+
+</div>
+
+</body>
+</html>

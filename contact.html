@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | The Builders</title>
+  <meta name="description" content="Get in touch with The Builders about HAZARD ZERO.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ====================================================================
+       HEADER / NAVIGATION
+       ==================================================================== -->
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <img src="assets/the-builders-logo.png" alt="The Builders logo">
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav-list">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="hazard-zero.html">Hazard Zero</a></li>
+          <li><a href="demo.html">Demo</a></li>
+          <li><a href="contact.html" aria-current="page">Contact</a></li>
+        </ul>
+      </nav>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ====================================================================
+       PAGE HERO
+       ==================================================================== -->
+  <section class="page-hero">
+    <div class="container">
+      <p class="section-kicker">Contact</p>
+      <h1>Contact The Builders</h1>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       CONTACT SECTION
+       Left column: static contact details (placeholders, clearly marked).
+       Right column: the demo enquiry form.
+       ==================================================================== -->
+  <section class="section">
+    <div class="container contact-layout">
+
+      <!-- ------------------------------------------------------------
+           CONTACT INFO
+           ------------------------------------------------------------ -->
+      <div class="contact-info">
+        <h3>Get in touch</h3>
+        <p>Questions about HAZARD ZERO or this project? Send a message and the team will follow up.</p>
+
+        <div class="info-row">
+          <p class="label">Email</p>
+          <p>hello@thebuilders.example</p>
+        </div>
+        <div class="info-row">
+          <p class="label">Company</p>
+          <p>The Builders</p>
+        </div>
+        <div class="info-row">
+          <p class="label">Response Time</p>
+          <p>We typically reply within two business days.</p>
+        </div>
+      </div>
+
+      <!-- ------------------------------------------------------------
+           CONTACT FORM
+           Validated and "submitted" entirely client-side by js/script.js.
+           No message is actually sent anywhere.
+           ------------------------------------------------------------ -->
+      <div class="contact-form">
+        <form id="contact-form" novalidate>
+          <div class="form-field">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required>
+            <span class="field-error" id="name-error"></span>
+          </div>
+
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+            <span class="field-error" id="email-error"></span>
+          </div>
+
+          <div class="form-field">
+            <label for="company">Company</label>
+            <input type="text" id="company" name="company" required>
+            <span class="field-error" id="company-error"></span>
+          </div>
+
+          <div class="form-field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="5" required></textarea>
+            <span class="field-error" id="message-error"></span>
+          </div>
+
+          <button type="submit" class="btn btn--primary">Send Message</button>
+          
+
+          <div id="form-confirmation" role="status"></div>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       FOOTER
+       ==================================================================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="logo">
+          <img src="assets/the-builders-logo.png" alt="The Builders logo">
+          <p class="tagline">Building Safer Workplaces Through Technology.</p>
+        </div>
+        <nav aria-label="Footer">
+          <ul class="footer-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="hazard-zero.html">Hazard Zero</a></li>
+            <li><a href="demo.html">Demo</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 The Builders. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo | The Builders</title>
+  <meta name="description" content="Explore an interactive demo of the HAZARD ZERO warehouse safety training experience.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ====================================================================
+       HEADER / NAVIGATION
+       ==================================================================== -->
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <img src="assets/the-builders-logo.png" alt="The Builders logo">
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav-list">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="hazard-zero.html">Hazard Zero</a></li>
+          <li><a href="demo.html" aria-current="page">Demo</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ====================================================================
+       PAGE HERO
+       ==================================================================== -->
+  <section class="page-hero">
+    <div class="container">
+      <p class="section-kicker">Demo</p>
+      <h1>Interactive Demo</h1>
+      <p class="tagline" style="color: #a7abb3; font-family: var(--font-body); font-weight: 400;">
+        Explore how a trainee moves through the HAZARD ZERO experience, from entering
+        the warehouse to receiving feedback on a decision.
+      </p>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       DEMO FLOW
+       A genuine four-step sequence describing what happens in the demo.
+       ==================================================================== -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <p class="section-kicker">Walkthrough</p>
+        <h2>What this demo covers.</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="step-number">01</span>
+          <h3>Enter Warehouse</h3>
+          <p>The trainee is placed inside the 360° environment.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">02</span>
+          <h3>Search for Hazards</h3>
+          <p>They look around the scene for anything unsafe.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">03</span>
+          <h3>Make a Decision</h3>
+          <p>They choose how to respond to what they've found.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">04</span>
+          <h3>Receive Feedback</h3>
+          <p>The system explains whether that response was correct.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       DEMO SCREENS
+       Three screens shown as cards: the simulation, a detected hazard,
+       and the supervisor-facing admin dashboard.
+       ==================================================================== -->
+  <section class="section section--light">
+    <div class="container">
+      <div class="section-head">
+        <p class="section-kicker">Inside the Experience</p>
+        <h2>A look inside HAZARD ZERO.</h2>
+      </div>
+      <div class="grid-3">
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <img src="assets/game-screen.jpg" alt="HAZARD ZERO simulation screen showing a warehouse scene and a decision prompt.">
+          <div style="padding: 1.5rem;">
+            <h3>Simulation View</h3>
+            <p>The main 360° environment a trainee navigates.</p>
+          </div>
+        </div>
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <img src="assets/game-hazard.jpg" alt="HAZARD ZERO screen showing a hazard flagged by the trainee.">
+          <div style="padding: 1.5rem;">
+            <h3>Hazard Detected</h3>
+            <p>The moment a trainee correctly flags a risk.</p>
+          </div>
+        </div>
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <img src="assets/admin-dashboard.jpg" alt="HAZARD ZERO admin dashboard showing session and scoring statistics.">
+          <div style="padding: 1.5rem;">
+            <h3>Admin Dashboard</h3>
+            <p>Supervisor view of sessions, scores and hazards found.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       LAUNCH DEMO
+       Placeholder CTA — no real hosted build exists yet, so the button
+       is left as a clearly marked slot for the actual demo URL.
+       ==================================================================== -->
+  <section class="cta-band">
+    <div class="container">
+      <h2>Try it yourself.</h2>
+      <p>The hosted build will be linked here once it's available.</p>
+      <div class="btn-row">
+    <a href="./Hazard-Zero/index.html" class="btn btn--primary" target="_blank">
+        Launch Demo
+    </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       FOOTER
+       ==================================================================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="logo">
+          <img src="assets/the-builders-logo.png" alt="The Builders logo">
+          <p class="tagline">Building Safer Workplaces Through Technology.</p>
+        </div>
+        <nav aria-label="Footer">
+          <ul class="footer-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="hazard-zero.html">Hazard Zero</a></li>
+            <li><a href="demo.html">Demo</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 The Builders. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
