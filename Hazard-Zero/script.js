@@ -49,14 +49,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const warehouseImages = [
         "assests/assests.webp",
         "assests/assests1.webp",
-        "assests/assests.png",
-        "assests/assests2.png",
-        "assests/assests3.png",
-        "assests/cable.png",
-        "assests/chemical.png",
-        "assests/fire.png",
-        "assests/emergencyexit.png",
-        "assests/shelf.png"
+        "assests/assests.webp",
+        "assests/assests2.webp",
+        "assests/assests3.webp",
+        "assests/cable.webp",
+        "assests/chemical.webp",
+        "assests/fire.webp",
+        "assests/emergencyexit.webp",
+        "assests/shelf.webp"
 
 
 
@@ -64,8 +64,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     const workerImages = {
-        male: "assests/worker-male.png",
-        female: "assests/worker-female.png"
+        male: "assests/worker-male.webp",
+        female: "assests/worker-female.webp"
     };
 
 

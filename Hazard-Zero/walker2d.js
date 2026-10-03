@@ -20,20 +20,20 @@
     // hy = the y of the hazard on the floor (0 top .. 1 bottom of the photo)
     // sy = the y where the worker stands to inspect it (a bit in front of it)
     const ZONES = [
-        { type: 'oil',        img: 'assests/assests.png',        hx: 0.76, hw: 0.11, hy: 0.64, sy: 0.72, name: 'RECEIVING' },
-        { type: 'box',        img: 'assests/assests2.png',       hx: 0.84, hw: 0.10, hy: 0.68, sy: 0.76, name: 'CONVEYOR' },
-        { type: 'electrical', img: 'assests/assests3.png',       hx: 0.80, hw: 0.10, hy: 0.66, sy: 0.74, name: 'ELECTRICAL' },
-        { type: 'cable',      img: 'assests/cable.png',          hx: 0.50, hw: 0.16, hy: 0.74, sy: 0.81, name: 'CABLE ZONE' },
-        { type: 'chemical',   img: 'assests/chemical.png',       hx: 0.75, hw: 0.12, hy: 0.74, sy: 0.81, name: 'CHEMICALS' },
-        { type: 'emergency',  img: 'assests/emergencyexit.png',  hx: 0.62, hw: 0.10, hy: 0.70, sy: 0.78, name: 'EMERGENCY EXIT' },
-        { type: 'fire',       img: 'assests/fire.png',           hx: 0.75, hw: 0.09, hy: 0.80, sy: 0.87, name: 'FLAMMABLES' },
-        { type: 'shelf',      img: 'assests/shelf.png',          hx: 0.46, hw: 0.11, hy: 0.70, sy: 0.78, name: 'AISLE 15' }
+        { type: 'oil',        img: 'assests/assests.webp',        hx: 0.76, hw: 0.11, hy: 0.64, sy: 0.72, name: 'RECEIVING' },
+        { type: 'box',        img: 'assests/assests2.webp',       hx: 0.84, hw: 0.10, hy: 0.68, sy: 0.76, name: 'CONVEYOR' },
+        { type: 'electrical', img: 'assests/assests3.webp',       hx: 0.80, hw: 0.10, hy: 0.66, sy: 0.74, name: 'ELECTRICAL' },
+        { type: 'cable',      img: 'assests/cable.webp',          hx: 0.50, hw: 0.16, hy: 0.74, sy: 0.81, name: 'CABLE ZONE' },
+        { type: 'chemical',   img: 'assests/chemical.webp',       hx: 0.75, hw: 0.12, hy: 0.74, sy: 0.81, name: 'CHEMICALS' },
+        { type: 'emergency',  img: 'assests/emergencyexit.webp',  hx: 0.62, hw: 0.10, hy: 0.70, sy: 0.78, name: 'EMERGENCY EXIT' },
+        { type: 'fire',       img: 'assests/fire.webp',           hx: 0.75, hw: 0.09, hy: 0.80, sy: 0.87, name: 'FLAMMABLES' },
+        { type: 'shelf',      img: 'assests/shelf.webp',          hx: 0.46, hw: 0.11, hy: 0.70, sy: 0.78, name: 'AISLE 15' }
     ];
     const STAND_BACK = 0.07;   // he stops this far (fraction of the photo width) LEFT of the hazard, facing it
 
     const SPRITES = {
-        male:   { src: 'assests/worker-male.png',   w: 1797, h: 3930, hip: 0.649, cut: 0.537 },
-        female: { src: 'assests/worker-female.png', w: 1879, h: 3955, hip: 0.720, cut: 0.474 }
+        male:   { src: 'assests/worker-male.webp',   w: 1797, h: 3930, hip: 0.649, cut: 0.537 },
+        female: { src: 'assests/worker-female.webp', w: 1879, h: 3955, hip: 0.720, cut: 0.474 }
     };
     // crop box of the visible pixels inside each PNG (it has transparent margins)
     const CROP = {
