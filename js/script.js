@@ -74,13 +74,22 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       // All fields valid — show a confirmation and reset the form.
+       var n = contactForm.querySelector("#name").value.trim();
+      var e = contactForm.querySelector("#email").value.trim();
+      var c = contactForm.querySelector("#company").value.trim();
+      var m = contactForm.querySelector("#message").value.trim();
+      var body = "Name: " + n + "\nEmail: " + e + "\nCompany: " + c + "\n\n" + m;
+      window.location.href = "mailto:YOUR_TEAM_EMAIL@gmail.com?subject=" +
+        encodeURIComponent("Enquiry from " + n + " (" + c + ")") +
+        "&body=" + encodeURIComponent(body);
+
       if (confirmation) {
-        var firstName = contactForm.querySelector("#name").value.trim();
-        confirmation.textContent =
-          "Thanks, " + firstName + ". This form isn't connected to a live inbox yet, so your message wasn't sent — once it is, it'll reach The Builders team directly from here.";
+        confirmation.textContent = "Thanks, " + n + ". Your email app should open with your message ready to send.";
         confirmation.classList.add("visible");
       }
       contactForm.reset();
+      
+
     });
   }
 
