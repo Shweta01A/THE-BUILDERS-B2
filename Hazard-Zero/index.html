@@ -6,7 +6,7 @@
 
     <title>Hazard Zero | Warehouse Safety Training</title>
 
-    <!-- Pannellum 360 Viewer -->
+    <!-- Pannellum: the 360 degree viewer used by the "360 VIEW" button -->
     <link
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"
@@ -428,34 +428,127 @@
             </div>
 
 
+            <!-- =============================================
+                 EMPLOYEE SEARCH & TRAINING RECORDS
+                 Filters run in script.js (applyAdminFilters)
+                 ============================================= -->
+            <h2 class="records-heading">
+                Employee Search &amp; Training Records
+            </h2>
+
+            <div class="filter-bar">
+
+                <input
+                    id="admin-search"
+                    class="auth-input filter-search"
+                    type="text"
+                    placeholder="Search employee by ID or name..."
+                    autocomplete="off"
+                >
+
+                <select id="filter-gender" class="filter-select">
+                    <option value="">All genders</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+
+                <select id="filter-status" class="filter-select">
+                    <option value="">All training status</option>
+                    <option value="completed">Completed</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="not-started">Not Started</option>
+                </select>
+
+                <select id="filter-risk" class="filter-select">
+                    <option value="">All risk levels</option>
+                    <option value="low">Low risk</option>
+                    <option value="medium">Medium risk</option>
+                    <option value="high">High risk</option>
+                </select>
+
+                <input
+                    id="filter-score-min"
+                    class="filter-select filter-score"
+                    type="number"
+                    min="0"
+                    max="400"
+                    placeholder="Min score"
+                >
+
+                <input
+                    id="filter-score-max"
+                    class="filter-select filter-score"
+                    type="number"
+                    min="0"
+                    max="400"
+                    placeholder="Max score"
+                >
+
+                <button
+                    id="filter-reset"
+                    class="small-button"
+                    type="button"
+                >
+                    RESET
+                </button>
+
+                <button
+                    id="export-csv-button"
+                    class="small-button export-button"
+                    type="button"
+                >
+                    EXPORT CSV
+                </button>
+
+            </div>
+
+            <p
+                id="filter-count"
+                class="filter-count"
+            ></p>
+
             <div class="table-wrapper">
-
                 <table>
-
                     <thead>
-
                         <tr>
                             <th>Employee ID</th>
-                             <th>Name</th>
-                             <th>Gender</th>
-                             <th>Score</th>
-                             <th>Best Score</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Score</th>
+                            <th>Best Score</th>
                             <th>Attempts</th>
                             <th>Completion Time</th>
                             <th>Last Attempt</th>
-                             <th>Risk</th>
-                             <th>Status</th>
+                            <th>Risk</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
-
                     </thead>
-
-
                     <tbody
                         id="employee-table-body"
                     ></tbody>
-
                 </table>
+            </div>
 
+            <!-- Details popup for one employee -->
+            <div
+                id="employee-detail-modal"
+                class="detail-modal hidden"
+            >
+                <div class="detail-card">
+                    <h3 id="detail-title">Employee details</h3>
+                    <div
+                        id="detail-body"
+                        class="detail-body"
+                    ></div>
+                    <button
+                        id="detail-close"
+                        class="primary-button"
+                        type="button"
+                    >
+                        CLOSE
+                    </button>
+                </div>
             </div>
 
         </main>
@@ -466,68 +559,156 @@
 
     <!-- =====================================================
          INTRODUCTION / SAFETY BRIEFING
+         The greeting uses the employee's registered name and ID
+         (filled in by startIntroduction() in script.js).
          ===================================================== -->
-
     <section
         id="intro-screen"
-        class="screen intro-screen hidden"
+        class="screen briefing-screen hidden"
     >
+        <div class="briefing-card">
 
-        <!-- Background 360 warehouse -->
-        <div id="intro-panorama"></div>
-
-
-        <!-- Dark cinematic overlay -->
-        <div class="intro-dark"></div>
-
-
-        <!-- Worker image
-             JavaScript automatically changes this to:
-
-             male   = assests/worker-male.png
-             female = assests/worker-female.png
-        -->
-
-        <img
-            id="worker-image"
-            class="worker-image"
-            src="assests/worker-male.png"
-            alt="Warehouse worker"
-        >
-
-
-        <!-- Dialogue -->
-
-        <div class="intro-dialogue">
+            <div class="logo">
+                HAZARD <span>ZERO</span>
+            </div>
 
             <div class="intro-label">
                 SAFETY BRIEFING
             </div>
 
-
             <h2 id="intro-title">
                 Hello!
             </h2>
 
+            <h3 class="briefing-subtitle">
+                Welcome to Hazard Zero Safety Training
+            </h3>
+
+            <div
+                id="intro-employee-meta"
+                class="briefing-meta"
+            ></div>
 
             <p id="intro-text">
-                Welcome to Hazard Zero.
+                Before entering the warehouse, please read this short briefing.
             </p>
 
+            <ul class="briefing-list">
+                <li>
+                    You will explore a realistic warehouse and identify
+                    workplace hazards.
+                </li>
+                <li>
+                    <strong>Correctly identifying hazards</strong>
+                    increases your score.
+                </li>
+                <li>
+                    <strong>Incorrect decisions</strong>
+                    deduct points and raise your risk level.
+                </li>
+                <li>
+                    Ignoring a hazard can increase the <strong>risk level</strong>.
+                    Three unsafe decisions end the training.
+                </li>
+                <li>
+                    Follow safe workplace procedures at all times.
+                </li>
+                <li>
+                    The training has a <strong>5 minute time limit</strong>.
+                </li>
+                <li>
+                    Your final result shows your performance.
+                </li>
+            </ul>
+
+            <button
+                id="intro-continue-button"
+                class="primary-button"
+                type="button"
+            >
+                CONTINUE TO SAFETY GUIDE →
+            </button>
+
+        </div>
+    </section>
+
+
+    <!-- =====================================================
+         SAFETY GUIDE (shown before entering the 3D warehouse)
+         ===================================================== -->
+    <section
+        id="guide-screen"
+        class="screen briefing-screen hidden"
+    >
+        <div class="briefing-card guide-card">
+
+            <div class="logo">
+                HAZARD <span>ZERO</span>
+            </div>
+
+            <h2>SAFETY GUIDE</h2>
+
+            <div class="guide-grid">
+
+                <div class="guide-item">
+                    <small>YOUR OBJECTIVE</small>
+                    <p>Explore the warehouse and identify unsafe conditions.</p>
+                </div>
+
+                <div class="guide-item">
+                    <small>BE ALERT</small>
+                    <p>Hazards may be near shelves, equipment, walkways and work areas.</p>
+                </div>
+
+                <div class="guide-item">
+                    <small>INTERACTION</small>
+                    <p>Move close to a suspicious object and press <kbd>E</kbd> to inspect it.</p>
+                </div>
+
+                <div class="guide-item">
+                    <small>SCORING</small>
+                    <p>Correct safety decisions increase your score.</p>
+                </div>
+
+                <div class="guide-item">
+                    <small>MISTAKES</small>
+                    <p>Unsafe decisions cause score deductions and increased risk.</p>
+                </div>
+
+                <div class="guide-item">
+                    <small>SAFETY FIRST</small>
+                    <p>Do not ignore a hazard just because it is not blocking your path.</p>
+                </div>
+
+            </div>
+
+            <div class="controls-box">
+                <small>CONTROLS</small>
+                <div class="controls-grid">
+                    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</span>
+                    <span><kbd>Mouse</kbd> Look around</span>
+                    <span><kbd>E</kbd> Inspect / interact</span>
+                    <span><kbd>Shift</kbd> Run</span>
+                    <span><kbd>V</kbd> 360° view</span>
+                    <span><kbd>Wheel</kbd> Zoom camera</span>
+                    <span><kbd>Esc</kbd> Pause</span>
+                </div>
+            </div>
+
+            <p class="guide-quote">
+                “Stay alert. Think before you act. Your decisions matter.”
+            </p>
 
             <button
                 id="begin-training-button"
                 class="primary-button"
                 type="button"
             >
-                BEGIN TRAINING →
+                START TRAINING
             </button>
 
         </div>
-
     </section>
-
-
 
     <!-- =====================================================
          MAIN GAME
@@ -539,14 +720,42 @@
     >
 
         <!-- =================================================
-             360 PANORAMA
+             3D WAREHOUSE - the WebGL canvas is created inside this
+             element by warehouse3d.js
              ================================================= -->
 
         <div id="panorama"></div>
 
+        <!-- 360 degree view button (also opened with the V key) -->
+        <button
+            id="view360-button"
+            class="view360-button"
+            type="button"
+        >
+            ⟳ 360° VIEW
+        </button>
 
-        <!-- Dark overlay -->
-        <div class="warehouse-overlay"></div>
+        <!-- Pannellum 360 degree viewer. It shows a 360 photo of the 3D
+             warehouse taken from the employee's position. -->
+        <div
+            id="pano360"
+            class="pano360 hidden"
+        >
+            <div id="pano360-view"></div>
+
+            <div class="pano360-bar">
+                <span>360° VIEW · drag to look around · scroll to zoom</span>
+                <button
+                    id="pano360-close"
+                    class="primary-button"
+                    type="button"
+                >
+                    BACK TO WAREHOUSE
+                </button>
+            </div>
+        </div>
+
+
 
 
 
@@ -634,7 +843,7 @@
             id="instruction"
             class="instruction"
         >
-            Double-click anywhere to move forward.
+            ← → or A / D to walk · Shift to run · E to inspect
         </div>
 
 
@@ -851,12 +1060,12 @@
 </section>
 
 <!-- =========================================================
-     PANNELLUM
+     3D ENGINE (Three.js module). It is loaded before script.js so
+     that window.HazardZero3D already exists when training starts.
      ========================================================= -->
 
-<script
-    src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"
-></script>
+<script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+<script src="walker2d.js"></script>
 
 
 <!-- =========================================================

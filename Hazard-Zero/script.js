@@ -1,58 +1,28 @@
 /* =========================================================
    HAZARD ZERO
    COMPLETE GAME SCRIPT
+   =========================================================
 
-   ---------------------------------------------------------
-   CHANGES IN THIS VERSION (performance refactor)
-   ---------------------------------------------------------
-   1. BUG FIX: loadIntroPanorama() checked `if (intro)` instead
-      of `if (introViewer)`. That's an undefined variable, so
-      the destroy() call silently threw and was swallowed by
-      the catch block — meaning the old intro WebGL context
-      was never released. Over repeated restarts this leaks
-      WebGL contexts (browsers cap these, commonly ~16) and
-      causes things to slow down or glitch. Fixed below.
+   HOW THE 3D VERSION WORKS
+   - warehouse3d.js builds the realistic 3D warehouse, the
+     employee, the third-person camera and the 8 hazards.
+   - This file keeps everything else: login, registration,
+     score, risk, timer, questions and the admin dashboard.
+   - When the employee presses E next to a hazard, the 3D
+     engine calls HazardZero3D.onInspect(type) and the matching
+     question panel opens here. The answer is sent back with
+     HazardZero3D.resolveHazard(type, decision).
 
-   2. PERFORMANCE: loadScene() used to call viewer.destroy()
-      and construct a brand-new pannellum.viewer() for EVERY
-      scene change — tearing down and rebuilding the whole
-      WebGL canvas each time, with no preloading, so the next
-      panorama only started downloading the moment the player
-      clicked "next".
-
-      Replaced with Pannellum's built-in multi-scene config:
-      all panoramas are registered once (with preload: true)
-      on ONE persistent viewer, created in initGameViewer().
-      Moving between scenes now calls viewer.loadScene(id) on
-      the same instance — no destroy/recreate, and upcoming
-      scenes are fetched in the background while the current
-      one is being viewed.
-
-      New/changed functions: sceneId(), buildScenesConfig(),
-      initGameViewer(), onSceneReady(), loadScene(), and the
-      "Begin Training" click handler + moveToNextScene() (both
-      updated to match the new loadScene(index) signature).
-
-      Everything else — hazard hotspot logic, scoring, the
-      timer, admin dashboard, login/registration, notifications
-      — is unchanged.
-
-   SCENES
-   1 = Warehouse
-   2 = Warehouse
-   3 = OIL SPILL
-   4 = UNSTABLE BOXES
-   5 = ELECTRICAL FIRE
-   6 = CABLE TRIP HAZARD
-   7 = Chemical
-   8 = FIRE HAZARD
+   HAZARDS
+   oil, box, electrical, cable, chemical, fire, emergency, shelf
 
    FEATURES
    - Employee login
    - Employee registration
    - Admin login
    - Admin dashboard
-   - 360 degree Pannellum viewer
+   - Realistic 3D warehouse (Three.js) with third-person camera
+   - Employee search, filters and CSV export in the admin dashboard
    - Hazard questions
    - Score system
    - Risk system
@@ -105,6 +75,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let viewer = null;
     let introViewer = null;
+
+    // How many of the 8 hazards the employee has already answered.
+    // When it reaches TOTAL_HAZARDS the training is finished.
+    let hazardsResolved = 0;
+    const TOTAL_HAZARDS = 8;
 
     let currentScene = 0;
 
@@ -354,7 +329,7 @@ let trainingCompletionTime = 0;
        ===================================================== */
 
     function resetTraining() {
-
+        hazardsResolved = 0;
         score = 0;
 
         riskFactor = 0;
@@ -872,49 +847,369 @@ let trainingCompletionTime = 0;
         }
 
 
-        const table =
-            document.getElementById(
-                "employee-table-body"
-            );
+        // The table itself is drawn by renderAdminTable(), which also
+        // applies the search box and the filter drop-downs.
+        renderAdminTable();
+
+    }
 
 
-        if (!table) {
+    /* =====================================================
+       ADMIN: SEARCH, FILTERS, EXPORT AND DETAILS
+       ===================================================== */
 
-            return;
+    // Works out the training status of one employee record.
+    //   completed   = finished the training successfully
+    //   in-progress = has started (attempt, score or risk recorded) but not completed
+    //   not-started = registered but has never played
+    function getTrainingStatus(employee) {
 
+        if (employee.completed === true) {
+            return "completed";
         }
 
+        const started =
+            Number(employee.attempts || 0) > 0 ||
+            Number(employee.score || 0) > 0 ||
+            Number(employee.risk || 0) > 0;
+
+        return started ? "in-progress" : "not-started";
+
+    }
+
+    // Risk is stored as a percentage: under 30 = low, 30-69 = medium, 70+ = high.
+    function getRiskLevel(employee) {
+
+        const risk = Number(employee.risk || 0);
+
+        if (risk >= 70) { return "high"; }
+        if (risk >= 30) { return "medium"; }
+        return "low";
+
+    }
+
+    function statusLabel(status) {
+
+        if (status === "completed") { return "COMPLETED"; }
+        if (status === "in-progress") { return "IN PROGRESS"; }
+        return "NOT STARTED";
+
+    }
+
+    // Reads the search box and drop-downs and returns the matching employees.
+    function getFilteredEmployees() {
+
+        const value = function (id) {
+
+            const element = document.getElementById(id);
+            return element ? element.value : "";
+
+        };
+
+        const query = value("admin-search").trim().toLowerCase();
+        const gender = value("filter-gender");
+        const status = value("filter-status");
+        const risk = value("filter-risk");
+        const minText = value("filter-score-min");
+        const maxText = value("filter-score-max");
+        const min = minText === "" ? null : Number(minText);
+        const max = maxText === "" ? null : Number(maxText);
+
+        return getEmployees().filter(function (employee) {
+
+            const score = Number(employee.score || 0);
+
+            if (query) {
+
+                const haystack =
+                    (String(employee.id) + " " + String(employee.name)).toLowerCase();
+
+                if (!haystack.includes(query)) { return false; }
+
+            }
+
+            if (gender && String(employee.gender).toLowerCase() !== gender) { return false; }
+            if (status && getTrainingStatus(employee) !== status) { return false; }
+            if (risk && getRiskLevel(employee) !== risk) { return false; }
+            if (min !== null && score < min) { return false; }
+            if (max !== null && score > max) { return false; }
+
+            return true;
+
+        });
+
+    }
+
+    // Draws the results table and the "showing X of Y" line.
+    function renderAdminTable() {
+
+        const table = document.getElementById("employee-table-body");
+
+        if (!table) {
+            return;
+        }
+
+        const all = getEmployees();
+        const list = getFilteredEmployees();
 
         table.innerHTML = "";
 
+        list.forEach(function (employee) {
 
-        employees.forEach(function (employee) {
-
-            const row =
-                document.createElement("tr");
-
+            const status = getTrainingStatus(employee);
+            const risk = getRiskLevel(employee);
+            const row = document.createElement("tr");
+            const id = escapeHTML(employee.id);
 
             row.innerHTML = `
-            <td>${employee.id}</td>
-            <td>${employee.name}</td>
-            <td>${employee.gender}</td>
-            <td>${employee.score || 0} / 400</td>
-            <td>${employee.bestScore || 0} / 400</td>
-            <td>${employee.attempts || 0}</td>
-            <td>${employee.completionTime || "Not completed"}</td>
-            <td>${employee.lastAttempt || "—"}</td>
-            <td>${employee.risk || 0}%</td>
-            <td>${employee.completed ? "COMPLETED" : "INCOMPLETE"}</td>
-
-    
+            <td>${id}</td>
+            <td>${escapeHTML(employee.name)}</td>
+            <td>${escapeHTML(employee.gender || "")}</td>
+            <td>${Number(employee.score || 0)} / 400</td>
+            <td>${Number(employee.bestScore || 0)} / 400</td>
+            <td>${Number(employee.attempts || 0)}</td>
+            <td>${escapeHTML(employee.completionTime || "Not completed")}</td>
+            <td>${escapeHTML(employee.lastAttempt || "—")}</td>
+            <td><span class="risk-badge risk-${risk}">${Number(employee.risk || 0)}% · ${risk.toUpperCase()}</span></td>
+            <td><span class="status-badge status-${status}">${statusLabel(status)}</span></td>
+            <td class="row-actions">
+                <button type="button" class="row-button" data-action="view" data-id="${id}">View Details</button>
+                <button type="button" class="row-button" data-action="export" data-id="${id}">Export</button>
+            </td>
             `;
-
 
             table.appendChild(row);
 
         });
 
+        if (list.length === 0) {
+
+            const empty = document.createElement("tr");
+            empty.innerHTML =
+                '<td colspan="11" class="empty-row">No employees match the current search.</td>';
+            table.appendChild(empty);
+
+        }
+
+        const count = document.getElementById("filter-count");
+
+        if (count) {
+
+            count.textContent =
+                "Showing " + list.length + " of " + all.length + " employees";
+
+        }
+
     }
+
+    // Builds CSV text. Passwords are never exported.
+    function employeesToCSV(list) {
+
+        const header = [
+            "Employee ID", "Name", "Gender", "Score", "Best Score",
+            "Attempts", "Completion Time", "Last Attempt",
+            "Risk %", "Risk Level", "Wrong Decisions", "Status"
+        ];
+
+        const quote = function (value) {
+
+            return '"' + String(value === undefined || value === null ? "" : value).replace(/"/g, '""') + '"';
+
+        };
+
+        const rows = list.map(function (employee) {
+
+            return [
+                employee.id,
+                employee.name,
+                employee.gender,
+                Number(employee.score || 0),
+                Number(employee.bestScore || 0),
+                Number(employee.attempts || 0),
+                employee.completionTime || "Not completed",
+                employee.lastAttempt || "",
+                Number(employee.risk || 0),
+                getRiskLevel(employee),
+                Number(employee.wrongDecisions || 0),
+                statusLabel(getTrainingStatus(employee))
+            ].map(quote).join(",");
+
+        });
+
+        return [header.map(quote).join(",")].concat(rows).join("\r\n");
+
+    }
+
+    function downloadCSV(filename, list) {
+
+        const blob = new Blob(
+            ["\uFEFF" + employeesToCSV(list)],
+            { type: "text/csv;charset=utf-8;" }
+        );
+
+        const link = document.createElement("a");
+
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(function () {
+            URL.revokeObjectURL(link.href);
+        }, 500);
+
+    }
+
+    // Popup with the full record of one employee.
+    function showEmployeeDetails(employee) {
+
+        const modal = document.getElementById("employee-detail-modal");
+        const title = document.getElementById("detail-title");
+        const body = document.getElementById("detail-body");
+
+        if (!modal || !body) {
+            return;
+        }
+
+        const status = getTrainingStatus(employee);
+        const risk = getRiskLevel(employee);
+
+        title.textContent = employee.name + " (" + employee.id + ")";
+
+        const line = function (label, value) {
+
+            return "<div><small>" + label + "</small><strong>" + escapeHTML(value) + "</strong></div>";
+
+        };
+
+        body.innerHTML =
+            line("Gender", employee.gender || "—") +
+            line("Training status", statusLabel(status)) +
+            line("Current score", Number(employee.score || 0) + " / 400") +
+            line("Best score", Number(employee.bestScore || 0) + " / 400") +
+            line("Risk", Number(employee.risk || 0) + "% (" + risk.toUpperCase() + ")") +
+            line("Wrong decisions", Number(employee.wrongDecisions || 0) + " / " + MAX_WRONG_DECISIONS) +
+            line("Attempts", Number(employee.attempts || 0)) +
+            line("Completion time", employee.completionTime || "Not completed") +
+            line("Last attempt", employee.lastAttempt || "—");
+
+        modal.classList.remove("hidden");
+
+    }
+
+    // Connects the search box, drop-downs and buttons (runs once).
+    function setupAdminFilters() {
+
+        ["admin-search", "filter-score-min", "filter-score-max"].forEach(function (id) {
+
+            const element = document.getElementById(id);
+
+            if (element) {
+                element.addEventListener("input", renderAdminTable);
+            }
+
+        });
+
+        ["filter-gender", "filter-status", "filter-risk"].forEach(function (id) {
+
+            const element = document.getElementById(id);
+
+            if (element) {
+                element.addEventListener("change", renderAdminTable);
+            }
+
+        });
+
+        const reset = document.getElementById("filter-reset");
+
+        if (reset) {
+
+            reset.addEventListener("click", function () {
+
+                ["admin-search", "filter-gender", "filter-status", "filter-risk", "filter-score-min", "filter-score-max"]
+                    .forEach(function (id) {
+
+                        const element = document.getElementById(id);
+
+                        if (element) {
+                            element.value = "";
+                        }
+
+                    });
+
+                renderAdminTable();
+
+            });
+
+        }
+
+        // Export everything currently shown in the table.
+        const exportButton = document.getElementById("export-csv-button");
+
+        if (exportButton) {
+
+            exportButton.addEventListener("click", function () {
+
+                downloadCSV("hazard-zero-training-records.csv", getFilteredEmployees());
+
+            });
+
+        }
+
+        // View / Export buttons inside table rows.
+        const tableBody = document.getElementById("employee-table-body");
+
+        if (tableBody) {
+
+            tableBody.addEventListener("click", function (event) {
+
+                const button = event.target.closest("button[data-action]");
+
+                if (!button) {
+                    return;
+                }
+
+                const employee = getEmployees().find(function (item) {
+                    return String(item.id) === button.dataset.id;
+                });
+
+                if (!employee) {
+                    return;
+                }
+
+                if (button.dataset.action === "view") {
+                    showEmployeeDetails(employee);
+                } else {
+                    downloadCSV("employee-" + employee.id + ".csv", [employee]);
+                }
+
+            });
+
+        }
+
+        const close = document.getElementById("detail-close");
+        const modal = document.getElementById("employee-detail-modal");
+
+        if (close && modal) {
+
+            close.addEventListener("click", function () {
+                modal.classList.add("hidden");
+            });
+
+            modal.addEventListener("click", function (event) {
+
+                if (event.target === modal) {
+                    modal.classList.add("hidden");
+                }
+
+            });
+
+        }
+
+    }
+
+    setupAdminFilters();
 
 
     function escapeHTML(text) {
@@ -1026,10 +1321,7 @@ function startIntroduction() {
         currentEmployee
     ) {
 
-        introTitle.textContent =
-            "Hello, my name is " +
-            currentEmployee.name +
-            ".";
+        introTitle.textContent = "Hello, " + currentEmployee.name + "!";
 
     }
 
@@ -1040,10 +1332,7 @@ function startIntroduction() {
 
     if (introText) {
 
-        introText.textContent =
-            "Welcome to Hazard Zero. " +
-            "Today you will complete a warehouse safety inspection. " +
-            "Look around carefully and identify hazards before making unsafe decisions.";
+        introText.textContent = "Before entering the warehouse, please read this short briefing. " + "You will walk through a realistic warehouse and decide how to react to the hazards you find.";
 
     }
 
@@ -1052,20 +1341,18 @@ function startIntroduction() {
     // LOAD INTRO PANORAMA
     // =========================================
 
-    loadIntroPanorama();
+    // Show the employee's registered details on the briefing card.
+    const introMeta =
+        document.getElementById("intro-employee-meta");
 
+    if (introMeta && currentEmployee) {
 
-    // =========================================
-    // WARM THE CACHE FOR SCENE 1 WHILE THE
-    // PLAYER IS STILL READING THE INTRO TEXT
-    // (scene 0 is already being loaded above by
-    // the intro viewer itself, so it's covered)
-    // =========================================
+        introMeta.textContent =
+            "Employee ID: " + currentEmployee.id +
+            "  |  " + currentEmployee.name +
+            "  |  " + (currentEmployee.gender === "female" ? "Female" : "Male");
 
-    prefetchImage(
-        warehouseImages[1]
-    );
-
+    }
 }
     /* =====================================================
        INTRO 360 VIEWER
@@ -1091,15 +1378,6 @@ function startIntroduction() {
 
 
         try {
-
-            /* -------------------------------------------------
-               BUG FIX: this used to check `if (intro)` — an
-               undefined variable — so the destroy() call below
-               always threw and was swallowed by the catch,
-               meaning the previous intro viewer's WebGL context
-               was never released. Now correctly checks
-               `introViewer`.
-               ------------------------------------------------- */
 
             if (introViewer) {
 
@@ -1225,142 +1503,237 @@ function startIntroduction() {
         );
 
 
-    if (beginTrainingButton) {
+    // The briefing screen leads to the safety guide first.
+    const introContinueButton =
+        document.getElementById("intro-continue-button");
 
-        beginTrainingButton.addEventListener(
-            "click",
-            function () {
+    if (introContinueButton) {
 
-                try {
+        introContinueButton.addEventListener("click", function () {
 
-                    if (introViewer) {
-
-                        introViewer.destroy();
-
-                    }
-
-                } catch (error) {}
-
-
-                introViewer = null;
-
-
-                resetTraining();
-
-                updateHUD();
-
-                showScreen(
-                    "game-screen"
-                );
-                
-                startTrainingTimer();
-
-
-                setupGameControls();
-
-
-                /* ---------------------------------------------
-                   CHANGED: used to call
-                   loadScene(warehouseImages[0]), which built a
-                   brand-new single-scene viewer. Now builds the
-                   ONE multi-scene viewer that will be reused for
-                   the rest of this training run.
-                   --------------------------------------------- */
-
-                initGameViewer();
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       SCENE ID HELPER
-       Converts a scene index (0-9) into the id used inside
-       the Pannellum multi-scene config below, e.g. "scene0".
-       ===================================================== */
-
-    function sceneId(index) {
-
-        return "scene" + index;
-
-    }
-
-
-    /* =====================================================
-       BUILD MULTI-SCENE CONFIG
-       NOTE: scenes are NOT all marked preload:true here on
-       purpose. Doing that makes Pannellum kick off all 10
-       panorama downloads at once the moment the viewer is
-       created, which fights the FIRST scene (the one the
-       player is actually waiting on) for bandwidth and
-       browser connection slots. Instead, only the very next
-       scene is prefetched at a time — see prefetchImage()
-       and its call inside onSceneReady() below.
-       ===================================================== */
-
-    function buildScenesConfig() {
-
-        const scenes = {};
-
-        warehouseImages.forEach(function (path, index) {
-
-            scenes[sceneId(index)] = {
-
-                type: "equirectangular",
-
-                panorama: path
-
-            };
+            showScreen("guide-screen");
 
         });
 
-        return scenes;
+    }
+
+
+    // START TRAINING (on the safety guide) builds the 3D warehouse and begins.
+    if (beginTrainingButton) {
+
+        beginTrainingButton.addEventListener("click", async function () {
+
+            // ES modules (the 3D engine) cannot load from a file:// address.
+            if (location.protocol === "file:") {
+
+                alert(
+                    "The 3D warehouse needs to run from a local web server.\n\n" +
+                    "Double-click START-SERVER.bat (Windows) or run START-SERVER.sh,\n" +
+                    "then open http://localhost:8000 in your browser."
+                );
+
+                return;
+
+            }
+
+            if (!window.HazardZero3D) {
+
+                alert(
+                    "The 3D engine could not be loaded.\n" +
+                    "Please check your internet connection (Three.js is loaded from a CDN) and reload the page."
+                );
+
+                return;
+
+            }
+
+            resetTraining();
+            trainingStartTime = Date.now();
+            trainingTimerActive = true;
+            updateHUD();
+
+            showScreen("game-screen");
+
+            // Wait for the world to be built before the clock starts.
+            const started =
+                await window.HazardZero3D.start({
+                    gender: currentEmployee ? currentEmployee.gender : "male",
+                    name: currentEmployee ? currentEmployee.name : ""
+                });
+
+            if (!started) {
+
+                alert("The 3D warehouse could not start. Your browser may not support WebGL.");
+
+                hideGameChrome();
+                showScreen("guide-screen");
+                return;
+
+            }
+
+            startTrainingTimer();
+            setupGameControls();
+            updateHUD();
+
+        });
 
     }
 
 
     /* =====================================================
-       PREFETCH NEXT SCENE
-       Warms the browser's HTTP cache for one image at a time
-       by requesting it in the background. Called from
-       onSceneReady() for (currentScene + 1), so by the time a
-       player finishes reading/answering the current scene and
-       clicks "next", the next panorama is usually already
-       sitting in cache and Pannellum's loadScene() has almost
-       nothing left to fetch.
+       360 DEGREE VIEW (Pannellum)
+       The 3D engine takes a 360 photo from where the employee is
+       standing. Pannellum shows it so the employee can look all
+       around (including up at the roof and down at the floor).
        ===================================================== */
 
-    const prefetchedImages = {};
+    let panoViewer = null;
 
-    function prefetchImage(path) {
+    function open360View() {
 
-        if (!path || prefetchedImages[path]) {
+        const box = document.getElementById("pano360");
 
+        if (!window.HazardZero3D || !box || panoViewer) {
+            return;
+        }
+
+        if (!window.pannellum) {
+
+            alert("The 360 viewer could not be loaded. Please check your internet connection and reload the page.");
             return;
 
         }
 
-        prefetchedImages[path] = true;
+        // This also freezes the 3D world while the viewer is open.
+        const photo = window.HazardZero3D.capture360();
 
-        const image = new Image();
+        box.classList.remove("hidden");
 
-        image.src = path;
+        // Pendulum-style 360 view: spins freely all the way round (left/right),
+        // but the up/down tilt is limited to a small swing around the horizon so the
+        // floor and roof never swing past you and nothing seems to fly.
+        panoViewer = window.pannellum.viewer("pano360-view", {
+            type: "equirectangular",
+            panorama: photo,
+            autoLoad: true,
+            yaw: window.HazardZero3D.panoYaw || 0,
+            pitch: -8,
+            minPitch: -32,
+            maxPitch: 22,
+            hfov: 90,
+            minHfov: 55,
+            maxHfov: 110,
+            autoRotate: -4,
+            autoRotateInactivityDelay: 4000,
+            friction: 0.1,
+            mouseZoom: true,
+            showControls: false,
+            showFullscreenCtrl: false,
+            compass: false
+        });
+
+    }
+
+    // Closes the viewer. "resume" = go back to walking around.
+    function close360View(resume) {
+
+        const box = document.getElementById("pano360");
+
+        if (panoViewer) {
+
+            try { panoViewer.destroy(); } catch (error) { console.log("360 viewer cleanup:", error); }
+            panoViewer = null;
+
+        }
+
+        if (box) {
+            box.classList.add("hidden");
+        }
+
+        if (resume && window.HazardZero3D) {
+            window.HazardZero3D.resume();
+        }
+
+    }
+
+    const view360Button = document.getElementById("view360-button");
+    const pano360Close = document.getElementById("pano360-close");
+
+    if (view360Button) {
+
+        view360Button.addEventListener("click", function (event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+            open360View();
+
+        });
+
+    }
+
+    if (pano360Close) {
+
+        pano360Close.addEventListener("click", function () {
+
+            close360View(true);
+
+        });
+
+    }
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.code === "Escape" && panoViewer) {
+            close360View(true);
+        }
+
+    });
+
+    // Small helpers used when the 3D game has to stop or hide.
+    function stop3D() {
+
+        close360View(false);
+
+        if (window.HazardZero3D) {
+
+            window.HazardZero3D.stop();
+
+        }
+
+    }
+
+    function hideGameChrome() {
+
+        const game = document.getElementById("game-screen");
+
+        if (game) {
+            game.classList.add("hidden");
+        }
+
+        const hud = document.querySelector(".game-hud");
+
+        if (hud) {
+            hud.style.display = "none";
+        }
+
+        ["custom-exit-training", "custom-fullscreen-button"].forEach(function (id) {
+
+            const element = document.getElementById(id);
+
+            if (element) {
+                element.style.display = "none";
+            }
+
+        });
 
     }
 
 
     /* =====================================================
-       INITIALISE GAME VIEWER
-       Called once per training run (from the "Begin Training"
-       click). Builds ONE Pannellum instance covering every
-       scene, so moving between scenes never tears down and
-       rebuilds the whole WebGL canvas — it just swaps which
-       scene is active on the same canvas.
+       LOAD SCENE
        ===================================================== */
 
-    function initGameViewer() {
+    function loadScene(imagePath) {
 
         const panorama =
             document.getElementById(
@@ -1379,12 +1752,26 @@ function startIntroduction() {
         }
 
 
+        console.log(
+            "Loading Scene:",
+            currentScene + 1,
+            imagePath
+        );
+
+
+        hazardDecisionMade = false;
+
+        currentHazard = null;
+
+
+        hideHazardPanel();
+
+        hideResultPanel();
+
+
         panorama.style.opacity =
-            "1";
+            "0.01";
 
-
-        // Defensive cleanup in case a previous run's viewer
-        // wasn't destroyed cleanly.
 
         try {
 
@@ -1406,6 +1793,8 @@ function startIntroduction() {
 
         viewer = null;
 
+        panorama.innerHTML = "";
+
 
         if (
             typeof pannellum ===
@@ -1415,6 +1804,9 @@ function startIntroduction() {
             console.error(
                 "Pannellum library is not loaded."
             );
+
+            panorama.style.opacity =
+                "1";
 
             return;
 
@@ -1428,89 +1820,125 @@ function startIntroduction() {
                     "panorama",
                     {
 
-                        default: {
+                        type:
+                            "equirectangular",
 
-                            firstScene:
-                                sceneId(0),
+                        panorama:
+                            imagePath,
 
-                            sceneFadeDuration:
-                                200,
+                        autoLoad:
+                            true,
 
-                            autoLoad:
-                                true,
+                        showControls:
+                            true,
 
-                            showControls:
-                                true,
+                        showFullscreenCtrl:
+                            false,
 
-                            showFullscreenCtrl:
-                                false,
+                        showZoomCtrl:
+                            true,
 
-                            showZoomCtrl:
-                                true,
+                        compass:
+                            false,
 
-                            compass:
-                                false,
+                        hfov:
+                            100,
 
-                            hfov:
-                                100,
+                        pitch:
+                            0,
 
-                            pitch:
-                                0,
+                        yaw:
+                            0,
 
-                            yaw:
-                                0,
+                        minHfov:
+                            50,
 
-                            minHfov:
-                                50,
+                        maxHfov:
+                            120,
 
-                            maxHfov:
-                                120,
+                        draggable:
+                            true,
 
-                            draggable:
-                                true,
+                        mouseZoom:
+                            true,
 
-                            mouseZoom:
-                                true,
+                        doubleClickZoom:
+                            false,
 
-                            doubleClickZoom:
-                                false,
+                        keyboardZoom:
+                            true,
 
-                            keyboardZoom:
-                                true,
-
-                            friction:
-                                0.15
-
-                        },
-
-                        scenes:
-                            buildScenesConfig()
+                        friction:
+                            0.15
 
                     }
                 );
 
 
-            // Fires once, when the very first scene finishes loading.
-
             viewer.on(
                 "load",
                 function () {
 
-                    onSceneReady(
-                        sceneId(currentScene)
+                    console.log(
+                        "Scene loaded:",
+                        currentScene + 1
                     );
 
-                }
-            );
+
+                    panorama.style.opacity =
+                        "1";
 
 
-            // Fires every time a later scene is switched to.
+                    setTimeout(function () {
 
-            viewer.on(
-                "scenechange",
-                function (id) {
+                        resizeViewer();
 
-                    onSceneReady(id);
+                    }, 100);
+
+
+                    updateHUD();
+
+
+                    if (currentScene === 2) {
+
+                        addOilHazard();
+
+                    }
+
+
+                    if (currentScene === 3) {
+
+                        addBoxHazard();
+
+                    }
+
+
+                    if (currentScene === 4) {
+
+                        addElectricalHazard();
+
+                    }
+
+
+                    if (currentScene === 5) {
+
+                        addCableHazard();
+
+                    }
+                    if (currentScene === 6) {
+
+                       addChemicalHazard();
+                    }
+                    if (currentScene === 7) {
+
+                        addFireHazard();
+                    }
+                    if (currentScene === 8) {
+                       addEmergencyHazard();
+                    }
+                    if (currentScene === 9) {
+                       addShelfHazard();
+                    }
 
                 }
             );
@@ -1542,175 +1970,6 @@ function startIntroduction() {
                 "1";
 
         }
-    }
-
-
-    /* =====================================================
-       SCENE READY
-       Shared handler for both the first scene ("load" event)
-       and every scene switch after it ("scenechange" event).
-       Anything that used to live inside the old loadScene()'s
-       "load" callback — hiding panels, resizing, updating the
-       HUD, adding the right hazard for the current scene —
-       lives here now.
-       ===================================================== */
-
-    function onSceneReady(id) {
-
-        console.log(
-            "Scene ready:",
-            id,
-            "index:",
-            currentScene
-        );
-
-
-        hazardDecisionMade = false;
-
-        currentHazard = null;
-
-
-        hideHazardPanel();
-
-        hideResultPanel();
-
-
-        const panorama =
-            document.getElementById(
-                "panorama"
-            );
-
-
-        if (panorama) {
-
-            panorama.style.opacity =
-                "1";
-
-        }
-
-
-        setTimeout(function () {
-
-            resizeViewer();
-
-        }, 100);
-
-
-        updateHUD();
-
-
-        if (currentScene === 2) {
-
-            addOilHazard();
-
-        }
-
-        if (currentScene === 3) {
-
-            addBoxHazard();
-
-        }
-
-        if (currentScene === 4) {
-
-            addElectricalHazard();
-
-        }
-
-        if (currentScene === 5) {
-
-            addCableHazard();
-
-        }
-
-        if (currentScene === 6) {
-
-            addChemicalHazard();
-
-        }
-
-        if (currentScene === 7) {
-
-            addFireHazard();
-
-        }
-
-        if (currentScene === 8) {
-
-            addEmergencyHazard();
-
-        }
-
-        if (currentScene === 9) {
-
-            addShelfHazard();
-
-        }
-
-
-        // Start fetching the NEXT scene's image now, while the
-        // player is still looking at/answering this one.
-
-        prefetchImage(
-            warehouseImages[currentScene + 1]
-        );
-
-    }
-
-
-    /* =====================================================
-       LOAD SCENE
-       Switches the ALREADY-RUNNING viewer to a new scene by
-       index. No destroy, no recreate — just a scene swap on
-       the same WebGL canvas, using a panorama that was already
-       preloading in the background while the player was on the
-       previous scene.
-       ===================================================== */
-
-    function loadScene(sceneIndex) {
-
-        if (!viewer) {
-
-            console.error(
-                "Game viewer is not initialised yet — call initGameViewer() first."
-            );
-
-            return;
-
-        }
-
-
-        console.log(
-            "Switching to scene:",
-            sceneIndex + 1
-        );
-
-
-        hazardDecisionMade = false;
-
-        currentHazard = null;
-
-
-        hideHazardPanel();
-
-        hideResultPanel();
-
-
-        try {
-
-            viewer.loadScene(
-                sceneId(sceneIndex)
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Scene switch error:",
-                error
-            );
-
-        }
-
     }
     /* =====================================================
    5 MINUTE TRAINING TIMER
@@ -1799,12 +2058,10 @@ function startTrainingTimer() {
             // =========================================
 
             if (trainingTime <= 0) {
-
                 trainingTime = 0;
-
                 updateTimerDisplay();
-
                 stopTrainingTimer();
+                stop3D();
 
 
                 showTimerNotification(
@@ -2093,67 +2350,28 @@ function showTimerNotification(
             now;
 
 
-        if (currentScene < 9) {
-
-            currentScene++;
-
-            /* -------------------------------------------------
-               CHANGED: used to be
-               loadScene(warehouseImages[currentScene]) — an
-               image path. loadScene() now takes the scene
-               INDEX and switches the existing viewer to it.
-               ------------------------------------------------- */
-
-            loadScene(
-                currentScene
-            );
-
+        // All hazards answered: the training is over.
+        if (hazardsResolved >= TOTAL_HAZARDS) {
+            finishTraining();
             return;
-
         }
 
-
-        finishTraining();
+        // Otherwise the employee goes back to exploring the 3D warehouse.
+        if (window.HazardZero3D) {
+            window.HazardZero3D.resume();
+        }
 
     }
 
 
     /* =====================================================
-       DOUBLE CLICK TO MOVE
+       MOVEMENT
+       Walking is handled by the 3D engine (WASD + mouse), so the
+       old "double-click to move forward" panorama control is gone.
        ===================================================== */
 
     const gameScreen =
-        document.getElementById(
-            "game-screen"
-        );
-
-
-    if (gameScreen) {
-
-        gameScreen.addEventListener(
-            "dblclick",
-            function (event) {
-
-                if (
-                    event.target.closest("button") ||
-                    event.target.closest(".pnlm-hotspot") ||
-                    event.target.closest(".hazard-panel") ||
-                    event.target.closest(".result-panel") ||
-                    event.target.closest("#custom-fullscreen-button") ||
-                    event.target.closest("#custom-exit-training")
-                ) {
-
-                    return;
-
-                }
-
-
-                moveToNextScene();
-
-            }
-        );
-
-    }
+        document.getElementById("game-screen");
 
 
     /* =====================================================
@@ -2232,9 +2450,7 @@ function showTimerNotification(
 
         if (sceneDisplay) {
 
-            sceneDisplay.textContent =
-                "SCENE " +
-                (currentScene + 1);
+            sceneDisplay.textContent = hazardsResolved + " / " + TOTAL_HAZARDS;
 
         }
 
@@ -3223,8 +3439,15 @@ function addCableHazard() {
             true;
 
 
-        const hazardType =
-            currentHazard;
+        const hazardType = currentHazard;
+
+        // One more hazard answered. Tell the 3D world so it can mark it as
+        // done (a safe answer also cordons the area off with cones and tape).
+        hazardsResolved++;
+
+        if (window.HazardZero3D) {
+            window.HazardZero3D.resolveHazard(hazardType, decision);
+        }
 
 
         console.log(
@@ -4841,8 +5064,11 @@ function saveProgress() {
    ===================================================== */
 
 function finishTraining(success) {
-
     console.log("TRAINING FINISHED");
+
+    // Stop the 3D engine and release the mouse so the result screen is clickable.
+    stop3D();
+
     // =====================================================
 // CALCULATE TRAINING COMPLETION TIME
 // =====================================================
@@ -5221,10 +5447,9 @@ else {
     // =========================================
     // HIDE GAME PANELS
     // =========================================
-
     hideHazardPanel();
-
     hideResultPanel();
+    hideGameChrome();
 
 
     // =========================================
@@ -5249,10 +5474,11 @@ function exitTraining() {
 
 
     if (!shouldExit) {
-
         return;
-
     }
+
+    // Stop the 3D engine before leaving the training.
+    stop3D();
 
 
     // =========================================
@@ -6068,55 +6294,10 @@ function exitTraining() {
             function () {
 
                 removeGameNotification();
-
-
                 hideHazardPanel();
-
                 hideResultPanel();
-
-
-                try {
-
-                    if (viewer) {
-
-                        viewer.destroy();
-
-                    }
-
-                } catch (error) {
-
-                    console.log(
-                        "Viewer cleanup error:",
-                        error
-                    );
-
-                }
-
-
-                viewer = null;
-
-
-                try {
-
-                    if (introViewer) {
-
-                        introViewer.destroy();
-
-                    }
-
-                } catch (error) {
-
-                    console.log(
-                        "Intro viewer cleanup error:",
-                        error
-                    );
-
-                }
-
-
-                introViewer = null;
-
-
+                stop3D();
+                hideGameChrome();
                 currentEmployee = null;
 
 
@@ -6131,6 +6312,52 @@ function exitTraining() {
         );
 
     }
+
+
+    /* =====================================================
+       3D ENGINE BRIDGE
+       When the employee presses E next to a hazard, the 3D engine
+       calls onInspect(type). The matching question panel is opened
+       here, using the same panels and answers as before.
+       ===================================================== */
+
+    const hazardOpeners = {
+        oil: openOilHazard,
+        box: openBoxHazard,
+        electrical: openElectricalHazard,
+        cable: openCableHazard,
+        chemical: openChemicalHazard,
+        fire: openFireHazard,
+        emergency: openEmergencyHazard,
+        shelf: openShelfHazard
+    };
+
+    function connect3DBridge() {
+
+        if (!window.HazardZero3D) {
+            return;
+        }
+
+        window.HazardZero3D.onView360 = open360View;
+
+        window.HazardZero3D.onInspect = function (type) {
+
+            const open = hazardOpeners[type];
+
+            if (!open) {
+                return;
+            }
+
+            // Each inspection is a fresh question.
+            hazardDecisionMade = false;
+            open();
+
+        };
+
+    }
+
+    connect3DBridge();
+    window.addEventListener("hazardzero3d-ready", connect3DBridge);
 
 
     /* =====================================================
